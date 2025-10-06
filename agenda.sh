@@ -19,142 +19,123 @@ mostrar_menu() {
     echo -n "Selecciona una opción: "
 }
 
-#!/bin/bash
-
-BANCO="banco.txt"
-
-# Función para mostrar el menú
-mostrar_menu() {
-    echo "----------------------------------"
-    echo "            Banco                 "
-    echo "----------------------------------"
-    echo "1. Agregar cliente"
-    echo "2. Borrar cliente"
-    echo "3. Consultar saldo de cliente"
-    echo "4. Listar clientes"    # Nueva opción
-    echo "5. Consignar"
-    echo "6. Retirar"
-    echo "7. Total de saldos"
-    echo "8. Generar reporte"
-    echo "0. Salir"
-    echo "----------------------------------"
-    echo -n "Selecciona una opción: "
-}
-
-# Función para agregar un cliente
-agregar_cliente() {
-    echo -n "Ingrese el nombre del cliente: "
+# Función para agregar un contacto
+agregar_contacto() {
+    echo -n "Ingrese el nombre del contacto: "
     read nombre
-    # Comprobar si el archivo existe y crearlo si no es así
-    if [ ! -f "$BANCO" ]; then
-        touch "$BANCO"
-        echo "Se ha creado el archivo $BANCO"
+    
+    if [ ! -f "$AGENDA" ]; then
+        touch "$AGENDA"
+        echo "Se ha creado el archivo $AGENDA"
     fi
-    if grep -q "^$nombre:" "$BANCO"; then
-        echo "El cliente ya existe."
+    
+    if grep -q "^$nombre:" "$AGENDA"; then
+        echo "El contacto ya existe."
     else
-        echo -n "Ingrese el saldo inicial: "
-        read saldo
-        echo "$nombre:$saldo" >> "$BANCO"
-        echo "Cliente agregado con éxito."
+        echo -n "Ingrese el número de teléfono: "
+        read telefono
+        echo "$nombre:$telefono" >> "$AGENDA"
+        echo "Contacto agregado con éxito."
     fi
 }
 
-# Función para borrar un cliente
-borrar_cliente() {
-    echo -n "Ingrese el nombre del cliente a borrar: "
+# Función para consultar un contacto
+consultar_contacto() {
+    echo -n "Ingrese el nombre del contacto a consultar: "
     read nombre
-    sed -i "/^$nombre:/d" "$BANCO"
-    echo "Cliente borrado, si existía."
-}
-
-# Función para consultar el saldo de un cliente
-consultar_saldo() {
-    echo -n "Ingrese el nombre del cliente: "
-    read nombre
-    saldo=$(grep "^$nombre:" "$BANCO" | cut -d ':' -f2)
-    if [ -z "$saldo" ]; then
-        echo "Cliente no encontrado."
+    
+    if [ ! -f "$AGENDA" ]; then
+        echo "La agenda está vacía."
+        return
+    fi
+    
+    telefono=$(grep "^$nombre:" "$AGENDA" | cut -d ':' -f2)
+    if [ -z "$telefono" ]; then
+        echo "Contacto no encontrado."
     else
-        echo "El saldo de $nombre es: $saldo"
+        echo "El teléfono de $nombre es: $telefono"
     fi
 }
 
-# Función para listar los clientes
-listar_clientes() {
-    echo "Lista de clientes:"
-    echo "╔═══════════════╦════════════╗"
-    echo "║ Nombre        ║ Saldo      ║"
-    echo "╠═══════════════╬════════════╣"
-    awk -F: '{printf "║ %-13s ║ %10d ║\n", $1, $2}' "$BANCO" | sort
-    echo "╚═══════════════╩════════════╝"
-}
-
-# Función para consignar dinero a un cliente
-consignar() {
-    echo -n "Ingrese el nombre del cliente: "
+# Función para borrar un contacto
+borrar_contacto() {
+    echo -n "Ingrese el nombre del contacto a borrar: "
     read nombre
-    echo -n "Ingrese la cantidad a consignar: "
-    read cantidad
-    if grep -q "^$nombre:" "$BANCO"; then
-        saldo_actual=$(grep "^$nombre:" "$BANCO" | cut -d ':' -f2)
-        nuevo_saldo=$((saldo_actual + cantidad))
-        sed -i "s/^$nombre:.*/$nombre:$nuevo_saldo/" "$BANCO"
-        echo "Consignación realizada. El nuevo saldo es: $nuevo_saldo"
+    
+    if [ ! -f "$AGENDA" ]; then
+        echo "La agenda está vacía."
+        return
+    fi
+    
+    if grep -q "^$nombre:" "$AGENDA"; then
+        sed -i "/^$nombre:/d" "$AGENDA"
+        echo "Contacto borrado con éxito."
     else
-        echo "Cliente no encontrado."
+        echo "Contacto no encontrado."
     fi
 }
 
-# Función para retirar dinero de un cliente
-retirar() {
-    echo -n "Ingrese el nombre del cliente: "
-    read nombre
-    echo -n "Ingrese la cantidad a retirar: "
-    read cantidad
-    if grep -q "^$nombre:" "$BANCO"; then
-        saldo_actual=$(grep "^$nombre:" "$BANCO" | cut -d ':' -f2)
-        if [ "$cantidad" -le "$saldo_actual" ]; then
-            nuevo_saldo=$((saldo_actual - cantidad))
-            sed -i "s/^$nombre:.*/$nombre:$nuevo_saldo/" "$BANCO"
-            echo "Retiro realizado. El nuevo saldo es: $nuevo_saldo"
-        else
-            echo "Saldo insuficiente."
-        fi
-    else
-        echo "Cliente no encontrado."
+# Función para listar todos los contactos
+listar_contactos() {
+    if [ ! -f "$AGENDA" ] || [ ! -s "$AGENDA" ]; then
+        echo "La agenda está vacía."
+        return
     fi
+    
+    echo "Lista de contactos:"
+    echo "╔═══════════════════════╦═══════════════╗"
+    echo "║ Nombre                ║ Teléfono      ║"
+    echo "╠═══════════════════════╬═══════════════╣"
+    awk -F: '{printf "║ %-21s ║ %-13s ║\n", $1, $2}' "$AGENDA"
+    echo "╚═══════════════════════╩═══════════════╝"
 }
 
-# Función para mostrar el total de saldos de todos los clientes
-total_saldos() {
-    total=0
-    while IFS=":" read -r nombre saldo; do
-        total=$((total + saldo))
-    done < "$BANCO"
-    echo "El total de saldos es: $total"
+# Función para ordenar contactos por nombre
+ordenar_por_nombre() {
+    if [ ! -f "$AGENDA" ] || [ ! -s "$AGENDA" ]; then
+        echo "La agenda está vacía."
+        return
+    fi
+    
+    echo "Contactos ordenados por nombre:"
+    echo "╔═══════════════════════╦═══════════════╗"
+    echo "║ Nombre                ║ Teléfono      ║"
+    echo "╠═══════════════════════╬═══════════════╣"
+    sort -t ':' -k1,1 "$AGENDA" | awk -F: '{printf "║ %-21s ║ %-13s ║\n", $1, $2}'
+    echo "╚═══════════════════════╩═══════════════╝"
 }
 
-# Función para generar un reporte ordenado por nombre con total de saldos
+# Función para ordenar contactos por teléfono
+ordenar_por_telefono() {
+    if [ ! -f "$AGENDA" ] || [ ! -s "$AGENDA" ]; then
+        echo "La agenda está vacía."
+        return
+    fi
+    
+    echo "Contactos ordenados por teléfono:"
+    echo "╔═══════════════════════╦═══════════════╗"
+    echo "║ Nombre                ║ Teléfono      ║"
+    echo "╠═══════════════════════╬═══════════════╣"
+    sort -t ':' -k2,2 "$AGENDA" | awk -F: '{printf "║ %-21s ║ %-13s ║\n", $1, $2}'
+    echo "╚═══════════════════════╩═══════════════╝"
+}
+
+# Función para generar reporte
 generar_reporte() {
-    sort -t ':' -k1,1 "$BANCO" > reporte.txt 
-    total=0
-    while IFS=":" read -r nombre saldo; do
-        total=$((total + saldo))
-    done < "$BANCO"
-    echo "----------------------" >> reporte.txt
-    echo "Total de saldos: $total" >> reporte.txt
-    echo "Reporte generado en 'reporte.txt'"
-}
-
-generar_reporte2() {
-  total=0
-  echo "╔═══════════════╦════════════╦═════════════════╗" > reporte.txt
-  echo "║ Nombre        ║ Saldo      ║ Total Acumulado ║" >> reporte.txt
-  echo "╠═══════════════╬════════════╬═════════════════╣" >> reporte.txt
-  awk -F: '{printf "║ %-13s ║ %10d ║ %15d ║\n", $1, $2, total+= $2}' "$BANCO" | sort -t ':' -k1,1 >> reporte.txt
-  echo "╚═══════════════╩════════════╩═════════════════╝" >> reporte.txt
-  echo "Reporte generado en 'reporte.txt'"
+    if [ ! -f "$AGENDA" ] || [ ! -s "$AGENDA" ]; then
+        echo "La agenda está vacía. No se puede generar reporte."
+        return
+    fi
+    
+    echo "╔═══════════════════════╦═══════════════╗" > reporte_agenda.txt
+    echo "║ Nombre                ║ Teléfono      ║" >> reporte_agenda.txt
+    echo "╠═══════════════════════╬═══════════════╣" >> reporte_agenda.txt
+    sort -t ':' -k1,1 "$AGENDA" | awk -F: '{printf "║ %-21s ║ %-13s ║\n", $1, $2}' >> reporte_agenda.txt
+    echo "╚═══════════════════════╩═══════════════╝" >> reporte_agenda.txt
+    echo "" >> reporte_agenda.txt
+    total=$(wc -l < "$AGENDA")
+    echo "Total de contactos: $total" >> reporte_agenda.txt
+    echo "Reporte generado en 'reporte_agenda.txt'"
 }
 
 # Bucle principal
@@ -162,15 +143,15 @@ while true; do
     mostrar_menu
     read opcion
     case $opcion in
-        1) agregar_cliente ;;
-        2) borrar_cliente ;;
-        3) consultar_saldo ;;
-        4) listar_clientes ;;   
-        5) consignar ;;
-        6) retirar ;;
-        7) total_saldos ;;
-        8) generar_reporte2 ;;
+        1) agregar_contacto ;;
+        2) consultar_contacto ;;
+        3) borrar_contacto ;;
+        4) listar_contactos ;;
+        5) ordenar_por_nombre ;;
+        6) ordenar_por_telefono ;;
+        7) generar_reporte ;;
         0) echo "Saliendo..."; exit 0 ;;
         *) echo "Opción no válida, intenta de nuevo." ;;
     esac
+    echo ""
 done

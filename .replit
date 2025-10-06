@@ -7,3 +7,26 @@ channel = "stable-22_11"
 
 [agent]
 expertMode = true
+
+[workflows]
+runButton = "Project"
+
+[[workflows.workflow]]
+name = "Project"
+mode = "parallel"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Agenda Telefónica"
+
+[[workflows.workflow]]
+name = "Agenda Telefónica"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "./agenda.sh"
+
+[workflows.workflow.metadata]
+outputType = "console"
