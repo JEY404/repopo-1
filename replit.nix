@@ -1,5 +1,6 @@
 { pkgs }: {
     deps = [
+      pkgs.mtools
       pkgs.tree
       pkgs.wget
       pkgs.wkhtmltopdf-bin

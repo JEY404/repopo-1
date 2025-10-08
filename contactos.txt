@@ -1,3 +1,0 @@
-Alice:1234
-Bob:5678
-Charlie:91011
